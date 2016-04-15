@@ -1,7 +1,8 @@
 import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
 import { Meteor } from 'meteor/meteor';
-import { createContainer } from 'meteor/react-meteor-data';
+//import { createContainer } from 'meteor/react-meteor-data';
+import {composeWithTracker} from 'react-komposer';
 
 import { Tasks } from '../api/tasks.js';
 
@@ -98,12 +99,13 @@ App.propTypes = {
   currentUser: PropTypes.object,
 };
 
-export default createContainer(() => {
-  Meteor.subscribe('tasks');
-
-  return {
-    tasks: Tasks.find({}, { sort: { createdAt: -1 } }).fetch(),
-    incompleteCount: Tasks.find({ checked: { $ne: true } }).count(),
-    currentUser: Meteor.user(),
+function composer(props, onData) {
+  if (Meteor.subscribe('tasks').ready()) {
+    const tasks = Tasks.find({}, { sort: { createdAt: -1 } }).fetch();
+    const incompleteCount = Tasks.find({ checked: { $ne: true } }).count();
+    const currentUser = Meteor.user();
+    onData(null, {tasks, incompleteCount, currentUser});
   };
-}, App);
+};
+
+export default composeWithTracker(composer)(App);
